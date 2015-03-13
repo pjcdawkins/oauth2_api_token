@@ -1,0 +1,6 @@
+name = OAuth2 API Token
+description = Provides API tokens, using the OAuth2 Server module.
+core = 7.x
+dependencies[] = oauth2_server
+
+files[] = includes/OAuth2ApiTokenAccessToken.class.php

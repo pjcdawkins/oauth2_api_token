@@ -1,0 +1,186 @@
+<?php
+/**
+ * @file
+ * OAuth2 API Token module.
+ */
+
+/**
+ * Implements hook_oauth2_server_token_bundles_alter().
+ */
+function oauth2_api_token_oauth2_server_token_bundles_alter(&$bundles) {
+  $bundles['api_token'] = array(
+    'label' => t('API token'),
+  );
+}
+
+/**
+ * Implements hook_flush_caches().
+ */
+function oauth2_api_token_flush_caches() {
+  $dir = drupal_get_path('module', 'oauth2_api_token');
+  require_once $dir . '/includes/oauth2_api_token.default_fields.inc';
+  _oauth2_api_token_install_fields();
+}
+
+/**
+ * Implements hook_menu().
+ */
+function oauth2_api_token_menu() {
+  $items = array();
+  $items['user/%user/api-tokens'] = array(
+    'title' => 'API Tokens',
+    'access callback' => 'oauth2_api_token_access',
+    'access arguments' => array('view', NULL, 1),
+    'page callback' => 'oauth2_api_token_user_list_page',
+    'page arguments' => array(1),
+    'file' => 'includes/oauth2_api_token.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['user/%user/api-tokens/create'] = array(
+    'title' => 'Create API Token',
+    'access callback' => 'oauth2_api_token_access',
+    'access arguments' => array('create', NULL, 1),
+    'page callback' => 'oauth2_api_token_create_page',
+    'page arguments' => array(1),
+    'file' => 'includes/oauth2_api_token.pages.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+  $items['user/%user/api-tokens/%oauth2_api_token'] = array(
+    'title callback' => 'oauth2_api_token_title',
+    'title arguments' => array(3),
+    'access callback' => 'oauth2_api_token_access',
+    'access arguments' => array('view', 3, 1),
+    'page callback' => 'oauth2_api_token_view_page',
+    'page arguments' => array(3),
+    'file' => 'includes/oauth2_api_token.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['user/%user/api-tokens/%oauth2_api_token/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['user/%user/api-tokens/%oauth2_api_token/edit'] = array(
+    'title' => 'Edit',
+    'access callback' => 'oauth2_api_token_access',
+    'access arguments' => array('update', 3, 1),
+    'page callback' => 'oauth2_api_token_edit_page',
+    'page arguments' => array(3),
+    'file' => 'includes/oauth2_api_token.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  $items['user/%user/api-tokens/%oauth2_api_token/delete'] = array(
+    'title' => 'Delete',
+    'access callback' => 'oauth2_api_token_access',
+    'access arguments' => array('delete', 3, 1),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oauth2_api_token_delete_form', 3),
+    'file' => 'includes/oauth2_api_token.forms.inc',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Load a single token by its ID.
+ *
+ * @param $token_id
+ *
+ * @return bool|OAuth2ServerToken
+ *   The token entity or FALSE if not found.
+ */
+function oauth2_api_token_load($token_id) {
+  $tokens = entity_load('oauth2_server_token', array($token_id));
+  return $tokens ? reset($tokens) : FALSE;
+}
+
+/**
+ * Title callback when viewing a token.
+ *
+ * @param OAuth2ServerToken $token
+ *   The token entity.
+ *
+ * @return string
+ *   A page title.
+ */
+function oauth2_api_token_title(OAuth2ServerToken $token) {
+  return t('API token: @application', array(
+    '@application' => $token->wrapper()->api_token_app->value(),
+  ));
+}
+
+/**
+ * Access callback for API tokens.
+ *
+ * @param string $op
+ *   The operation ('create', 'view', 'delete', 'update').
+ * @param OAuth2ServerToken $token
+ *   The token (optional).
+ * @param stdClass $account
+ *   The user account (optional, defaults to the current user).
+ *
+ * @return bool
+ *   Whether access is granted.
+ */
+function oauth2_api_token_access($op, OAuth2ServerToken $token = NULL, $account = NULL) {
+  if ($token && $token->type != 'api_token') {
+    return FALSE;
+  }
+
+  $is_current = $account->uid && $account->uid == $GLOBALS['user']->uid;
+  $is_own = $token && $token->uid == $account->uid;
+
+  switch ($op) {
+    case 'view':
+    case 'create':
+    case 'delete':
+    case 'update':
+      if ($is_current && (!$token || $is_own) && user_access('oauth2_api_token manage own', $account)) {
+        return TRUE;
+      }
+      break;
+
+  }
+
+  return FALSE;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function oauth2_api_token_permission() {
+  $permissions = array();
+  $permissions['oauth2_api_token manage own'] = array(
+    'title' => t('Manage own API tokens'),
+  );
+  return $permissions;
+}
+
+/**
+ * Get the user account for a token.
+ *
+ * @param OAuth2ServerToken $token
+ *   The token entity.
+ *
+ * @throws \Exception
+ *   If no account is found.
+ *
+ * @return stdClass
+ *   The user account that owns the token.
+ */
+function oauth2_api_token_get_account(OAuth2ServerToken $token) {
+  $account = user_load($token->uid);
+  if (!$account) {
+    throw new \Exception('Account not found');
+  }
+
+  return $account;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function oauth2_api_token_views_api() {
+  return array('api' => 3);
+}
