@@ -145,6 +145,7 @@ function oauth2_api_token_delete_form($form, &$form_state, OAuth2ServerToken $to
   $account = oauth2_api_token_get_account($token);
   $form_state['account'] = $account;
   $form_state['token'] = $token;
+
   return confirm_form(
     $form,
     t('Are you sure you want to delete this token?'),

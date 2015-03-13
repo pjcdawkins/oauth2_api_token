@@ -1,5 +1,12 @@
 <?php
+/**
+ * @file
+ * Contains OAuth2ApiTokenAccessToken class.
+ */
 
+/**
+ * Override \OAuth2\ResponseType\AccessToken to support API tokens.
+ */
 class OAuth2ApiTokenAccessToken extends \OAuth2\ResponseType\AccessToken {
 
   /**

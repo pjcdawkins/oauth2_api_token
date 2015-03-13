@@ -11,9 +11,11 @@ function oauth2_api_token_user_list_page($account) {
   $view = views_get_view('oauth2_api_token');
   if (!$view) {
     watchdog('oauth2_api_token', 'View not found: oauth2_api_token', array(), WATCHDOG_ERROR);
+
     return MENU_NOT_FOUND;
   }
   $view->override_path = current_path();
+
   return array(
     'list' => array(
       '#markup' => $view->preview('embed_1', array($account->uid)),
@@ -27,6 +29,7 @@ function oauth2_api_token_user_list_page($account) {
 function oauth2_api_token_create_page($account) {
   drupal_set_title(t('Create an API token'), PASS_THROUGH);
   module_load_include('inc', 'oauth2_api_token', 'includes/oauth2_api_token.forms');
+
   return array(
     'form' => drupal_get_form('oauth2_api_token_form', NULL, $account),
   );
@@ -37,6 +40,7 @@ function oauth2_api_token_create_page($account) {
  */
 function oauth2_api_token_view_page(OAuth2ServerToken $token) {
   $build = entity_view('oauth2_server_token', array($token));
+
   return $build;
 }
 
@@ -49,6 +53,7 @@ function oauth2_api_token_edit_page(OAuth2ServerToken $token) {
     return MENU_ACCESS_DENIED;
   }
   module_load_include('inc', 'oauth2_api_token', 'includes/oauth2_api_token.forms');
+
   return array(
     'form' => drupal_get_form('oauth2_api_token_form', $token, $account),
   );

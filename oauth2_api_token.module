@@ -79,19 +79,22 @@ function oauth2_api_token_menu() {
     'file' => 'includes/oauth2_api_token.forms.inc',
     'type' => MENU_CALLBACK,
   );
+
   return $items;
 }
 
 /**
  * Load a single token by its ID.
  *
- * @param $token_id
+ * @param int $token_id
+ *   The numerical ID of the token.
  *
  * @return bool|OAuth2ServerToken
  *   The token entity or FALSE if not found.
  */
 function oauth2_api_token_load($token_id) {
   $tokens = entity_load('oauth2_server_token', array($token_id));
+
   return $tokens ? reset($tokens) : FALSE;
 }
 
@@ -117,7 +120,7 @@ function oauth2_api_token_title(OAuth2ServerToken $token) {
  *   The operation ('create', 'view', 'delete', 'update').
  * @param OAuth2ServerToken $token
  *   The token (optional).
- * @param stdClass $account
+ * @param object $account
  *   The user account (optional, defaults to the current user).
  *
  * @return bool
@@ -154,6 +157,7 @@ function oauth2_api_token_permission() {
   $permissions['oauth2_api_token manage own'] = array(
     'title' => t('Manage own API tokens'),
   );
+
   return $permissions;
 }
 
@@ -166,7 +170,7 @@ function oauth2_api_token_permission() {
  * @throws \Exception
  *   If no account is found.
  *
- * @return stdClass
+ * @return object
  *   The user account that owns the token.
  */
 function oauth2_api_token_get_account(OAuth2ServerToken $token) {
