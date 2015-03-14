@@ -31,17 +31,22 @@ class OAuth2ApiTokenAccessToken extends \OAuth2\ResponseType\AccessToken {
    *   TRUE on success, FALSE on failure.
    */
   public function saveApiToken(OAuth2ServerToken $token) {
-    foreach (array('uid', 'scopes') as $property) {
+    foreach (array('client_id', 'uid', 'scopes') as $property) {
       if (empty($token->$property)) {
         throw new \RuntimeException('Missing required API token property: ' . $property);
       }
     }
 
-    // @todo set an appropriate client ID
-    $token->client_id = NULL;
+    if (!isset($token->token)) {
+      $token->token = $this->generateAccessToken();
+    }
 
-    $token->token = $this->generateAccessToken();
     $token->type = 'api_token';
+
+    // Force the expiry time to 19 January 2038: this is the easiest way to have
+    // a never-expiring token, for now.
+    // See https://github.com/bshaffer/oauth2-server-php/issues/166
+    $token->expires = 2147483647;
 
     return $token->save();
   }

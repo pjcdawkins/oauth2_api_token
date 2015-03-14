@@ -9,7 +9,7 @@
  *
  * This is invoked on cache clear.
  */
-function _oauth2_api_token_install_fields() {
+function oauth2_api_token_install_fields() {
   $field = field_info_field('api_token_app');
   // Create the application field if it's missing.
   if (!$field) {

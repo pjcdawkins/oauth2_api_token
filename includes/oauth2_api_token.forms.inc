@@ -29,7 +29,6 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
     'type' => 'api_token',
     'uid' => $account->uid,
     'expires_in' => NULL,
-    'is_new' => TRUE,
   ));
 
   $form_state['account'] = $account;
@@ -39,6 +38,11 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
   field_attach_form('oauth2_server_token', $token, $form, $form_state, NULL, array(
     'field_name' => 'api_token_app',
   ));
+
+  $token_scopes = array();
+  foreach ($token->wrapper()->scopes as $scope_wrapper) {
+    $token_scopes[] = $scope_wrapper->value()->internalIdentifier();
+  }
 
   // Load all the scopes for the server.
   $api_scopes = variable_get('oauth2_api_token_scopes', array('account'));
@@ -55,11 +59,10 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
         '@name' => $scope->name,
         '@description' => $scope->description,
       ));
-      if (!empty($token->is_new)) {
+      if (empty($token->token_id) && $server->settings['defaultScope'] == $scope_id) {
         $default_scopes[] = $scope_id;
       }
-      // @todo check this
-      elseif (in_array($scope_id, $token->wrapper()->scopes->value())) {
+      elseif (in_array($scope_id, $token_scopes)) {
         $default_scopes[] = $scope_id;
       }
     }
@@ -79,7 +82,7 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
   $form['actions'] = array('#type' => 'actions', '#weight' => 100);
   $form['actions']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Create API token'),
+    '#value' => empty($token->token_id) ? t('Create API token') : t('Update API token'),
   );
 
   $cancel_path = 'user/' . $account->uid . '/api-tokens';
@@ -101,6 +104,17 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
  */
 function oauth2_api_token_form_validate(&$form, &$form_state) {
   field_attach_validate('oauth2_server_token', $form_state['token']);
+
+  // @todo make the client configurable
+  $client_key = variable_get('oauth2_api_token_client', 'api_token');
+  $client = oauth2_server_client_load($client_key);
+  dpm($client);
+  if ($client && $client->server == variable_get('oauth2_api_token_server')) {
+    $form_state['client_id'] = $client->client_id;
+  }
+  else {
+    form_set_error('client', t('Client not found: @key', array('@key' => $client_key)));
+  }
 }
 
 /**
@@ -120,18 +134,14 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
 
   $token->uid = $account->uid;
 
-  // Force the expiry time to 19 January 2038: this is the easiest way to have
-  // a never-expiring token, for now.
-  // See https://github.com/bshaffer/oauth2-server-php/issues/166
-  if (!isset($token->expires)) {
-    $token->expires = 2147483647;
-  }
+  $token->client_id = $form_state['client_id'];
 
   $access_token = new OAuth2ApiTokenAccessToken();
 
+  $new = empty($token->token_id);
+
   $success = $access_token->saveApiToken($token);
-  if ($success) {
-    unset($token->is_new);
+  if ($success && $new) {
     drupal_set_message(t('Created API token for %application', array(
       '%application' => $token->wrapper()->api_token_app->value(),
     )));
