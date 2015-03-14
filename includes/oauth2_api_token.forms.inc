@@ -39,9 +39,12 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
     'field_name' => 'api_token_app',
   ));
 
+  // Find the current scopes for the token.
   $token_scopes = array();
-  foreach ($token->scopes[LANGUAGE_NONE] as $reference) {
-    $token_scopes[] = $reference['target_id'];
+  if (!empty($token->scopes)) {
+    foreach ($token->scopes[LANGUAGE_NONE] as $reference) {
+      $token_scopes[] = $reference['target_id'];
+    }
   }
 
   // Load all the scopes for the server.
@@ -59,7 +62,7 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
         '@name' => $scope->name,
         '@description' => $scope->description,
       ));
-      if (empty($token->token_id) && $server->settings['default_scope'] == $scope_id) {
+      if (empty($token->token_id) && $server->settings['default_scope'] == $scope->name) {
         $default_scopes[] = $scope_id;
       }
       elseif (in_array($scope_id, $token_scopes)) {
