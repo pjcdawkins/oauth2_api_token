@@ -40,8 +40,8 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
   ));
 
   $token_scopes = array();
-  foreach ($token->wrapper()->scopes as $scope_wrapper) {
-    $token_scopes[] = $scope_wrapper->value()->internalIdentifier();
+  foreach ($token->scopes[LANGUAGE_NONE] as $reference) {
+    $token_scopes[] = $reference['target_id'];
   }
 
   // Load all the scopes for the server.
@@ -103,7 +103,9 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
  * Validation callback for the API token form.
  */
 function oauth2_api_token_form_validate(&$form, &$form_state) {
-  field_attach_validate('oauth2_server_token', $form_state['token']);
+  field_attach_validate('oauth2_server_token', $form_state['token'], array(
+    'field_name' => 'api_token_app',
+  ));
 
   // @todo make the client configurable
   $client_key = variable_get('oauth2_api_token_client', 'api_token');
@@ -127,8 +129,11 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
 
   field_attach_submit('oauth2_server_token', $token, $form, $form_state);
 
-  foreach ($form_state['values']['scopes'] as $scope_id) {
-    $token->wrapper()->scopes[] = $scope_id;
+  $token->scopes = array();
+  foreach (array_unique($form_state['values']['scopes']) as $scope_id) {
+    if ($scope_id) {
+      $token->wrapper()->scopes[$scope_id] = $scope_id;
+    }
   }
 
   $token->uid = $account->uid;
@@ -146,6 +151,11 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
     )));
     drupal_set_message(t('Copy this token. It will not be shown again.'), 'status');
     drupal_set_message(check_plain($token->token), 'status', FALSE);
+  }
+  elseif ($success) {
+    drupal_set_message(t('Updated API token for %application', array(
+      '%application' => $token->wrapper()->api_token_app->value(),
+    )));
   }
   else {
     drupal_set_message(t('Failed to save API token'), 'error');
