@@ -34,6 +34,7 @@ function oauth2_api_token_views_default_views() {
   $handler->display->display_options['style_options']['columns'] = array(
     'api_token_app' => 'api_token_app',
     'scopes' => 'scopes',
+    'last_access' => 'last_access',
     'token_id' => 'token_id',
     'nothing_1' => 'nothing_1',
     'nothing' => 'nothing_1',
@@ -49,6 +50,13 @@ function oauth2_api_token_views_default_views() {
       'empty_column' => 0,
     ),
     'scopes' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'last_access' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -98,6 +106,13 @@ function oauth2_api_token_views_default_views() {
   );
   $handler->display->display_options['fields']['scopes']['delta_offset'] = '0';
   $handler->display->display_options['fields']['scopes']['separator'] = ' ';
+  /* Field: OAuth2 Server - Token: Last_access */
+  $handler->display->display_options['fields']['last_access']['id'] = 'last_access';
+  $handler->display->display_options['fields']['last_access']['table'] = 'oauth2_server_token';
+  $handler->display->display_options['fields']['last_access']['field'] = 'last_access';
+  $handler->display->display_options['fields']['last_access']['label'] = 'Last access';
+  $handler->display->display_options['fields']['last_access']['date_format'] = 'short';
+  $handler->display->display_options['fields']['last_access']['second_date_format'] = 'long';
   /* Field: OAuth2 Server - Token: Oauth2 server - token ID */
   $handler->display->display_options['fields']['token_id']['id'] = 'token_id';
   $handler->display->display_options['fields']['token_id']['table'] = 'oauth2_server_token';
@@ -167,6 +182,7 @@ function oauth2_api_token_views_default_views() {
     t('No API tokens found.'),
     t('Application'),
     t('Scopes'),
+    t('Last access'),
     t('Oauth2 server - token ID'),
     t('Links'),
     t('Edit'),

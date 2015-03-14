@@ -266,6 +266,12 @@ function oauth2_api_token_view_value_form($form, &$form_state, OAuth2ServerToken
       '#attributes' => array('autocomplete' => 'off'),
       '#element_validate' => array('oauth2_api_token_element_validate_password'),
     );
+    $form['actions']['cancel'] = array(
+      '#type' => 'link',
+      '#title' => t('Cancel'),
+      '#href' => 'user/' . $account->uid . '/api-tokens',
+      '#weight' => 1,
+    );
     $form['actions']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Continue'),
