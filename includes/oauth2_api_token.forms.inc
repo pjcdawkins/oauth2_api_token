@@ -120,6 +120,13 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
 
   $token->uid = $account->uid;
 
+  // Force the expiry time to 19 January 2038: this is the easiest way to have
+  // a never-expiring token, for now.
+  // See https://github.com/bshaffer/oauth2-server-php/issues/166
+  if (!isset($token->expires)) {
+    $token->expires = 2147483647;
+  }
+
   $access_token = new OAuth2ApiTokenAccessToken();
 
   $success = $access_token->saveApiToken($token);

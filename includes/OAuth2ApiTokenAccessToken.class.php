@@ -42,7 +42,6 @@ class OAuth2ApiTokenAccessToken extends \OAuth2\ResponseType\AccessToken {
 
     $token->token = $this->generateAccessToken();
     $token->type = 'api_token';
-    $token->expires = 0;
 
     return $token->save();
   }
