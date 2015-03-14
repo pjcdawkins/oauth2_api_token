@@ -55,11 +55,6 @@ function oauth2_api_token_menu() {
     'page arguments' => array('oauth2_api_token_view_value_form', 3, 1),
     'file' => 'includes/oauth2_api_token.forms.inc',
   );
-  $items['user/%user/api-tokens/%oauth2_api_token/view'] = array(
-    'title' => 'View',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => 0,
-  );
   $items['user/%user/api-tokens/%oauth2_api_token/edit'] = array(
     'title' => 'Edit',
     'access callback' => 'oauth2_api_token_access',
@@ -67,7 +62,6 @@ function oauth2_api_token_menu() {
     'page callback' => 'oauth2_api_token_edit_page',
     'page arguments' => array(3),
     'file' => 'includes/oauth2_api_token.pages.inc',
-    'type' => MENU_LOCAL_TASK,
     'weight' => 1,
   );
   $items['user/%user/api-tokens/%oauth2_api_token/delete'] = array(

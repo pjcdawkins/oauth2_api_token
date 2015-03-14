@@ -282,6 +282,11 @@ function oauth2_api_token_view_value_form($form, &$form_state, OAuth2ServerToken
     '#markup' => '<code>' . check_plain($token->token) . '</code>',
   );
 
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('OK'),
+  );
+
   return $form;
 }
 
@@ -292,5 +297,8 @@ function oauth2_api_token_view_value_form_submit(&$form, &$form_state) {
   if (isset($form_state['values']['password'])) {
     $form_state['password_confirmed'] = TRUE;
     $form_state['rebuild'] = TRUE;
+    return;
   }
+  $account = $form_state['account'];
+  $form_state['redirect'] = 'user/' . $account->uid . '/api-tokens';
 }
