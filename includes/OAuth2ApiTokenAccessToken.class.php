@@ -24,7 +24,7 @@ class OAuth2ApiTokenAccessToken extends \OAuth2\ResponseType\AccessToken {
    * Save a new API token.
    *
    * @param OAuth2ServerToken $token
-   *   A token entity with pre-populated 'type', 'uid', and 'scopes'
+   *   A token entity with pre-populated 'client_id', 'uid', and 'scopes'
    *   properties.
    *
    * @return bool
