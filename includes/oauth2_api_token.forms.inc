@@ -59,7 +59,7 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
         '@name' => $scope->name,
         '@description' => $scope->description,
       ));
-      if (empty($token->token_id) && $server->settings['defaultScope'] == $scope_id) {
+      if (empty($token->token_id) && $server->settings['default_scope'] == $scope_id) {
         $default_scopes[] = $scope_id;
       }
       elseif (in_array($scope_id, $token_scopes)) {
@@ -108,7 +108,6 @@ function oauth2_api_token_form_validate(&$form, &$form_state) {
   // @todo make the client configurable
   $client_key = variable_get('oauth2_api_token_client', 'api_token');
   $client = oauth2_server_client_load($client_key);
-  dpm($client);
   if ($client && $client->server == variable_get('oauth2_api_token_server')) {
     $form_state['client_id'] = $client->client_id;
   }
