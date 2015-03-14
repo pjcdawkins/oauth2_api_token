@@ -36,15 +36,6 @@ function oauth2_api_token_create_page($account) {
 }
 
 /**
- * Page callback for viewing a token.
- */
-function oauth2_api_token_view_page(OAuth2ServerToken $token) {
-  $build = entity_view('oauth2_server_token', array($token));
-
-  return $build;
-}
-
-/**
  * Page callback for editing a token.
  */
 function oauth2_api_token_edit_page(OAuth2ServerToken $token) {

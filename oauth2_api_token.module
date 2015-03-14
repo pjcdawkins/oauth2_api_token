@@ -51,10 +51,9 @@ function oauth2_api_token_menu() {
     'title arguments' => array(3),
     'access callback' => 'oauth2_api_token_access',
     'access arguments' => array('view', 3, 1),
-    'page callback' => 'oauth2_api_token_view_page',
-    'page arguments' => array(3),
-    'file' => 'includes/oauth2_api_token.pages.inc',
-    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oauth2_api_token_view_value_form', 3, 1),
+    'file' => 'includes/oauth2_api_token.forms.inc',
   );
   $items['user/%user/api-tokens/%oauth2_api_token/view'] = array(
     'title' => 'View',

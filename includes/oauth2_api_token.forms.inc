@@ -6,11 +6,47 @@
 
 /**
  * The API token editing form.
- *
- * @todo require password confirmation
  */
 function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = NULL, $account = NULL) {
   form_load_include($form_state, 'inc', 'module', 'includes/oauth2_api_token.forms');
+
+  $account = $account ?: $GLOBALS['user'];
+  $form_state['account'] = $account;
+
+  $form['actions'] = array('#type' => 'actions', '#weight' => 100);
+
+  $cancel_path = 'user/' . $account->uid . '/api-tokens';
+  if (isset($_GET['destination'])) {
+    $destination = drupal_get_destination();
+    $cancel_path = $destination['destination'];
+  }
+  $form['actions']['cancel'] = array(
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => $cancel_path,
+    '#weight' => 1,
+  );
+
+  if (empty($form_state['password_confirmed'])) {
+    $form['description'] = array(
+      '#prefix' => '<p>',
+      '#markup' => t('Confirm your password to continue.'),
+      '#suffix' => '</p>',
+    );
+    $form['password'] = array(
+      '#type' => 'password',
+      '#title' => t('Password'),
+      '#size' => 25,
+      '#required' => TRUE,
+      '#attributes' => array('autocomplete' => 'off'),
+      '#element_validate' => array('oauth2_api_token_element_validate_password'),
+    );
+    $form['actions']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Continue'),
+    );
+    return $form;
+  }
 
   $server_name = variable_get('oauth2_api_token_server');
   /** @var OAuth2Server $server */
@@ -22,8 +58,6 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
     return $form;
   }
 
-  $account = $account ?: $GLOBALS['user'];
-
   /** @var OAuth2ServerToken $token */
   $token = $token ?: entity_get_controller('oauth2_server_token')->create(array(
     'type' => 'api_token',
@@ -31,7 +65,6 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
     'expires_in' => NULL,
   ));
 
-  $form_state['account'] = $account;
   $form_state['token'] = $token;
 
   // Add the Application field.
@@ -82,21 +115,9 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
     );
   }
 
-  $form['actions'] = array('#type' => 'actions', '#weight' => 100);
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => empty($token->token_id) ? t('Create API token') : t('Update API token'),
-  );
-
-  $cancel_path = 'user/' . $account->uid . '/api-tokens';
-  if (isset($_GET['destination'])) {
-    $destination = drupal_get_destination();
-    $cancel_path = $destination['destination'];
-  }
-  $form['actions']['cancel'] = array(
-    '#type' => 'link',
-    '#title' => t('Cancel'),
-    '#href' => $cancel_path,
   );
 
   return $form;
@@ -106,6 +127,11 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
  * Validation callback for the API token form.
  */
 function oauth2_api_token_form_validate(&$form, &$form_state) {
+  // We are at the password confirm stage: no validation is required.
+  if (isset($form_state['values']['password'])) {
+    return;
+  }
+
   field_attach_validate('oauth2_server_token', $form_state['token'], array(
     'field_name' => 'api_token_app',
   ));
@@ -122,9 +148,28 @@ function oauth2_api_token_form_validate(&$form, &$form_state) {
 }
 
 /**
+ * Element validate callback for confirming the user's password.
+ */
+function oauth2_api_token_element_validate_password($element, &$form_state) {
+  // Only validate the password for the current user.
+  $account = $GLOBALS['user'];
+  require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'includes/password.inc');
+  if (!$element['#value'] || !user_check_password($element['#value'], $account)) {
+    form_error($element, t("Incorrect password."));
+  }
+}
+
+/**
  * Submit callback for the API token form.
  */
 function oauth2_api_token_form_submit(&$form, &$form_state) {
+  // Password confirmation.
+  if (isset($form_state['values']['password'])) {
+    $form_state['password_confirmed'] = TRUE;
+    $form_state['rebuild'] = TRUE;
+    return;
+  }
+
   $account = $form_state['account'];
 
   /** @var OAuth2ServerToken $token */
@@ -149,11 +194,10 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
 
   $success = $access_token->saveApiToken($token);
   if ($success && $new) {
-    drupal_set_message(t('Created API token for %application', array(
+    drupal_set_message(t('Created API token for %application: <code>@value</code>', array(
       '%application' => $token->wrapper()->api_token_app->value(),
-    )));
-    drupal_set_message(t('Copy this token. It will not be shown again.'), 'status');
-    drupal_set_message(check_plain($token->token), 'status', FALSE);
+      '@value' => $token->token,
+    )), 'statue', FALSE);
   }
   elseif ($success) {
     drupal_set_message(t('Updated API token for %application', array(
@@ -192,4 +236,61 @@ function oauth2_api_token_delete_form_submit($form, &$form_state) {
   $token->delete();
   drupal_set_message(t('The API token was successfully deleted'));
   $form_state['redirect'] = 'user/' . $account->uid . '/api-tokens';
+}
+
+/**
+ * Form for viewing a token's value.
+ */
+function oauth2_api_token_view_value_form($form, &$form_state, OAuth2ServerToken $token, $account = NULL) {
+  form_load_include($form_state, 'inc', 'module', 'includes/oauth2_api_token.forms');
+
+  $account = $account ?: $GLOBALS['user'];
+  $form_state['account'] = $account;
+
+  $form['token'] = entity_view('oauth2_server_token', array($token));
+  unset($form['token']['token']);
+
+  $form['actions'] = array('#type' => 'actions', '#weight' => 100);
+
+  if (empty($form_state['password_confirmed'])) {
+    $form['description'] = array(
+      '#prefix' => '<p>',
+      '#markup' => t('Confirm your password to view the API token'),
+      '#suffix' => '</p>',
+    );
+    $form['password'] = array(
+      '#type' => 'password',
+      '#title' => t('Password'),
+      '#size' => 25,
+      '#required' => TRUE,
+      '#attributes' => array('autocomplete' => 'off'),
+      '#element_validate' => array('oauth2_api_token_element_validate_password'),
+    );
+    $form['actions']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Continue'),
+    );
+    return $form;
+  }
+
+  $form['token_value'] = array(
+    '#type' => 'item',
+    '#title' => t('Token'),
+    '#attributes' => array(
+      'class' => array('oauth2-api-token-value'),
+    ),
+    '#markup' => '<code>' . check_plain($token->token) . '</code>',
+  );
+
+  return $form;
+}
+
+/**
+ * Submit callback for the API token 'view' form.
+ */
+function oauth2_api_token_view_value_form_submit(&$form, &$form_state) {
+  if (isset($form_state['values']['password'])) {
+    $form_state['password_confirmed'] = TRUE;
+    $form_state['rebuild'] = TRUE;
+  }
 }
