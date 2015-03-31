@@ -123,7 +123,7 @@ function oauth2_api_token_list_access($for, $account = NULL) {
     return TRUE;
   }
 
-  if ($account->uid == $for->uid && oauth2_api_token_access('view', NULL, $account)) {
+  if ($account->uid == $for->uid && user_access('oauth2_api_token manage own', $account)) {
     return TRUE;
   }
 
