@@ -7,15 +7,12 @@
 /**
  * The API token editing form.
  */
-function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = NULL, $account = NULL) {
+function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = NULL) {
   form_load_include($form_state, 'inc', 'module', 'includes/oauth2_api_token.forms');
-
-  $account = $account ?: $GLOBALS['user'];
-  $form_state['account'] = $account;
 
   $form['actions'] = array('#type' => 'actions', '#weight' => 100);
 
-  $cancel_path = 'user/' . $account->uid . '/api-tokens';
+  $cancel_path = 'user/' . $GLOBALS['user']->uid . '/api-tokens';
   if (isset($_GET['destination'])) {
     $destination = drupal_get_destination();
     $cancel_path = $destination['destination'];
@@ -61,7 +58,7 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
   /** @var OAuth2ServerToken $token */
   $token = $token ?: entity_get_controller('oauth2_server_token')->create(array(
     'type' => 'api_token',
-    'uid' => $account->uid,
+    'uid' => $GLOBALS['user']->uid,
     'expires_in' => NULL,
   ));
 
@@ -110,8 +107,23 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
       '#title' => t('Scopes'),
       '#options' => $scope_options,
       '#description' => t('Scopes restrict what the client is authorized to access using this API token.'),
-      '#weight' => 90,
+      '#weight' => 80,
       '#default_value' => $default_scopes,
+    );
+  }
+
+  if (user_access('oauth2_api_token administer')) {
+    $default_account = menu_get_object('user') ?: $GLOBALS['user'];
+    $token_user = user_load($token->uid);
+    $form['username'] = array(
+      '#type' => 'textfield',
+      '#title' => t('User account'),
+      '#description' => t('The account associated with the token.'),
+      '#size' => 30,
+      '#maxlength' => 60,
+      '#autocomplete_path' => 'user/autocomplete',
+      '#default_value' => empty($token->token_id) ? $default_account->name : $token_user->name,
+      '#weight' => 90,
     );
   }
 
@@ -135,6 +147,16 @@ function oauth2_api_token_form_validate(&$form, &$form_state) {
   field_attach_validate('oauth2_server_token', $form_state['token'], array(
     'field_name' => 'api_token_app',
   ));
+
+  if (!empty($form_state['values']['username'])) {
+    $account = user_load_by_name($form_state['values']['username']);
+    if ($account) {
+      $form_state['token_owner'] = $account;
+    }
+    else {
+      form_set_error('username', t('User not found: @name', array('@name' => $form_state['values']['username'])));
+    }
+  }
 
   // @todo make the client configurable
   $client_key = variable_get('oauth2_api_token_client', 'api_token');
@@ -170,8 +192,6 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
     return;
   }
 
-  $account = $form_state['account'];
-
   /** @var OAuth2ServerToken $token */
   $token = $form_state['token'];
 
@@ -184,7 +204,9 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
     }
   }
 
-  $token->uid = $account->uid;
+  if (!empty($form_state['token_owner'])) {
+    $token->uid = $form_state['token_owner']->uid;
+  }
 
   $token->client_id = $form_state['client_id'];
 
@@ -208,7 +230,7 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
     drupal_set_message(t('Failed to save API token'), 'error');
   }
 
-  $form_state['redirect'] = 'user/' . $account->uid . '/api-tokens';
+  $form_state['redirect'] = 'user/' . $token->uid . '/api-tokens';
 }
 
 /**

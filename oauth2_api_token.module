@@ -29,8 +29,8 @@ function oauth2_api_token_menu() {
   $items = array();
   $items['user/%user/api-tokens'] = array(
     'title' => 'API Tokens',
-    'access callback' => 'oauth2_api_token_access',
-    'access arguments' => array('view', NULL, 1),
+    'access callback' => 'oauth2_api_token_list_access',
+    'access arguments' => array(1),
     'page callback' => 'oauth2_api_token_user_list_page',
     'page arguments' => array(1),
     'file' => 'includes/oauth2_api_token.pages.inc',
@@ -39,9 +39,8 @@ function oauth2_api_token_menu() {
   $items['user/%user/api-tokens/create'] = array(
     'title' => 'Create API Token',
     'access callback' => 'oauth2_api_token_access',
-    'access arguments' => array('create', NULL, 1),
+    'access arguments' => array('create'),
     'page callback' => 'oauth2_api_token_create_page',
-    'page arguments' => array(1),
     'file' => 'includes/oauth2_api_token.pages.inc',
     'type' => MENU_LOCAL_ACTION,
   );
@@ -49,24 +48,24 @@ function oauth2_api_token_menu() {
     'title callback' => 'oauth2_api_token_title',
     'title arguments' => array(3),
     'access callback' => 'oauth2_api_token_access',
-    'access arguments' => array('view', 3, 1),
+    'access arguments' => array('view', 3),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('oauth2_api_token_view_value_form', 3, 1),
     'file' => 'includes/oauth2_api_token.forms.inc',
   );
   $items['user/%user/api-tokens/%oauth2_api_token/edit'] = array(
-    'title' => 'Edit',
+    'title' => 'Edit API Token',
     'access callback' => 'oauth2_api_token_access',
-    'access arguments' => array('update', 3, 1),
+    'access arguments' => array('update', 3),
     'page callback' => 'oauth2_api_token_edit_page',
     'page arguments' => array(3),
     'file' => 'includes/oauth2_api_token.pages.inc',
     'weight' => 1,
   );
   $items['user/%user/api-tokens/%oauth2_api_token/delete'] = array(
-    'title' => 'Delete',
+    'title' => 'Delete API Token',
     'access callback' => 'oauth2_api_token_access',
-    'access arguments' => array('delete', 3, 1),
+    'access arguments' => array('delete', 3),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('oauth2_api_token_delete_form', 3),
     'file' => 'includes/oauth2_api_token.forms.inc',
@@ -107,6 +106,31 @@ function oauth2_api_token_title(OAuth2ServerToken $token) {
 }
 
 /**
+ * Whether the user can access a list of API tokens.
+ *
+ * @param object $for
+ *   The account whose tokens will be listed.
+ * @param object $account
+ *   The account to check access for.
+ *
+ * @return bool
+ *   TRUE if access is granted, FALSE otherwise.
+ */
+function oauth2_api_token_list_access($for, $account = NULL) {
+  $account = $account ?: $GLOBALS['user'];
+
+  if (user_access('oauth2_api_token administer', $account)) {
+    return TRUE;
+  }
+
+  if ($account->uid == $for->uid && oauth2_api_token_access('view', NULL, $account)) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
  * Access callback for API tokens.
  *
  * @param string $op
@@ -114,7 +138,8 @@ function oauth2_api_token_title(OAuth2ServerToken $token) {
  * @param OAuth2ServerToken $token
  *   The token (optional).
  * @param object $account
- *   The user account (optional, defaults to the current user).
+ *   The user account to check access for (optional, defaults to the current
+ *   user).
  *
  * @return bool
  *   Whether access is granted.
@@ -124,15 +149,24 @@ function oauth2_api_token_access($op, OAuth2ServerToken $token = NULL, $account 
     return FALSE;
   }
 
-  $is_current = $account->uid && $account->uid == $GLOBALS['user']->uid;
-  $is_own = $token && $token->uid == $account->uid;
+  $account = $account ?: $GLOBALS['user'];
+
+  if (user_access('oauth2_api_token administer', $account)) {
+    return TRUE;
+  }
 
   switch ($op) {
-    case 'view':
     case 'create':
+      if (user_access('oauth2_api_token manage own', $account)) {
+        return TRUE;
+      }
+      break;
+
+    case 'view':
     case 'delete':
     case 'update':
-      if ($is_current && (!$token || $is_own) && user_access('oauth2_api_token manage own', $account)) {
+      $is_own = isset($token) && $token->uid == $account->uid;
+      if (user_access('oauth2_api_token manage own', $account) && $is_own) {
         return TRUE;
       }
       break;
@@ -147,6 +181,10 @@ function oauth2_api_token_access($op, OAuth2ServerToken $token = NULL, $account 
  */
 function oauth2_api_token_permission() {
   $permissions = array();
+  $permissions['oauth2_api_token administer'] = array(
+    'title' => t('Administer API tokens'),
+    'restrict access' => TRUE,
+  );
   $permissions['oauth2_api_token manage own'] = array(
     'title' => t('Manage own API tokens'),
   );
