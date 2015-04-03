@@ -124,6 +124,7 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
       '#autocomplete_path' => 'user/autocomplete',
       '#default_value' => empty($token->token_id) ? $default_account->name : $token_user->name,
       '#weight' => 90,
+      '#required' => TRUE,
     );
   }
 
