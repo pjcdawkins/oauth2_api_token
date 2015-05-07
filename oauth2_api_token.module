@@ -231,6 +231,7 @@ function oauth2_api_token_views_api() {
  * Create the dummy API token client.
  *
  * @param string $server_name
+ *   The machine name of the OAuth2 server.
  */
 function oauth2_api_token_create_client($server_name) {
   $client_key = 'api_token_' . $server_name;

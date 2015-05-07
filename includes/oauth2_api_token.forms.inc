@@ -46,7 +46,6 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
   }
 
   $server_name = variable_get('oauth2_api_token_server');
-  /** @var OAuth2Server $server */
   $server = $server_name ? oauth2_server_load($server_name) : NULL;
   if (!$server) {
     drupal_set_message(t('OAuth2 server not found'), 'error');
