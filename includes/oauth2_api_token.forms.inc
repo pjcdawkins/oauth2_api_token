@@ -79,25 +79,20 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
 
   // Load all the scopes for the server.
   $api_scopes = variable_get('oauth2_api_token_scopes', array('account'));
-  /** @var OAuth2ServerScope[] $server_scopes */
-  $server_scopes = oauth2_server_entity_load_by_properties('oauth2_server_scope', array(
-    'server' => $server->name,
-  ));
+  $server_scopes = oauth2_server_scope_load_multiple($server->name, $api_scopes);
   $default_scopes = array();
   $scope_options = array();
   foreach ($server_scopes as $scope) {
-    if (in_array($scope->name, $api_scopes)) {
-      $scope_id = $scope->internalIdentifier();
-      $scope_options[$scope_id] = t('@name (@description)', array(
-        '@name' => $scope->name,
-        '@description' => $scope->description,
-      ));
-      if (empty($token->token_id) && $server->settings['default_scope'] == $scope->name) {
-        $default_scopes[] = $scope_id;
-      }
-      elseif (in_array($scope_id, $token_scopes)) {
-        $default_scopes[] = $scope_id;
-      }
+    $scope_id = $scope->internalIdentifier();
+    $scope_options[$scope_id] = t('@name (@description)', array(
+      '@name' => $scope->name,
+      '@description' => $scope->description,
+    ));
+    if (empty($token->token_id) && $server->settings['default_scope'] == $scope->name) {
+      $default_scopes[] = $scope_id;
+    }
+    elseif (in_array($scope_id, $token_scopes)) {
+      $default_scopes[] = $scope_id;
     }
   }
 
@@ -159,10 +154,10 @@ function oauth2_api_token_form_validate(&$form, &$form_state) {
     }
   }
 
-  // @todo make the client configurable
-  $client_key = variable_get('oauth2_api_token_client', 'api_token');
+  $server_name = variable_get('oauth2_api_token_server');
+  $client_key = 'api_token_' . $server_name;
   $client = oauth2_server_client_load($client_key);
-  if ($client && $client->server == variable_get('oauth2_api_token_server')) {
+  if ($client && $client->server == $server_name) {
     $form_state['client_id'] = $client->client_id;
   }
   else {

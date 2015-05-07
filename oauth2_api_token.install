@@ -17,7 +17,6 @@ function oauth2_api_token_install() {
  * Implements hook_uninstall().
  */
 function oauth2_api_token_uninstall() {
-  variable_del('oauth2_api_token_client');
   variable_del('oauth2_api_token_server');
   variable_del('oauth2_api_token_scopes');
 }

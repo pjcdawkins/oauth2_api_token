@@ -27,6 +27,13 @@ function oauth2_api_token_flush_caches() {
  */
 function oauth2_api_token_menu() {
   $items = array();
+  $items['admin/config/people/api-tokens'] = array(
+    'title' => 'API Tokens',
+    'access arguments' => array('oauth2_api_token administer'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oauth2_api_token_config_form'),
+    'file' => 'includes/oauth2_api_token.admin.inc',
+  );
   $items['user/%user/api-tokens'] = array(
     'title' => 'API Tokens',
     'access callback' => 'oauth2_api_token_list_access',
@@ -218,4 +225,39 @@ function oauth2_api_token_get_account(OAuth2ServerToken $token) {
  */
 function oauth2_api_token_views_api() {
   return array('api' => 3);
+}
+
+/**
+ * Create the dummy API token client.
+ *
+ * @param string $server_name
+ */
+function oauth2_api_token_create_client($server_name) {
+  $client_key = 'api_token_' . $server_name;
+  $values = array(
+    'server' => $server_name,
+    'label' => t('API Token client'),
+    'client_key' => $client_key,
+    'client_secret' => oauth2_server_hash_client_secret(user_password()),
+    'redirect_uri' => 'http://localhost',
+    'automatic_authorization' => 0,
+    'settings' => array(
+      'override_grant_types' => 1,
+      'allow_implicit' => 0,
+      'grant_types' => array(),
+      'always_issue_new_refresh_token' => 0,
+    ),
+  );
+
+  if (!$client = oauth2_server_client_load($client_key)) {
+    $client = entity_create('oauth2_server_client', $values);
+    $client->save();
+    drupal_set_message(t('Created API token client: @key', array('@key' => $client_key)));
+  }
+  else {
+    foreach ($values as $key => $value) {
+      $client->$key = $value;
+    }
+    $client->save();
+  }
 }
