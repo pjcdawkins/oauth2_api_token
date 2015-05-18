@@ -32,7 +32,7 @@ class OAuth2ApiTokenAccessToken extends \OAuth2\ResponseType\AccessToken {
    */
   public function saveApiToken(OAuth2ServerToken $token) {
     foreach (array('client_id', 'uid', 'scopes') as $property) {
-      if (empty($token->$property)) {
+      if (!isset($token->$property)) {
         throw new \RuntimeException('Missing required API token property: ' . $property);
       }
     }
