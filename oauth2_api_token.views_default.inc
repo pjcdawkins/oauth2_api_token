@@ -34,6 +34,7 @@ function oauth2_api_token_views_default_views() {
   $handler->display->display_options['style_options']['columns'] = array(
     'api_token_app' => 'api_token_app',
     'scopes' => 'scopes',
+    'created' => 'created',
     'last_access' => 'last_access',
     'token_id' => 'token_id',
     'nothing_1' => 'nothing_1',
@@ -50,6 +51,13 @@ function oauth2_api_token_views_default_views() {
       'empty_column' => 0,
     ),
     'scopes' => array(
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -106,11 +114,16 @@ function oauth2_api_token_views_default_views() {
   );
   $handler->display->display_options['fields']['scopes']['delta_offset'] = '0';
   $handler->display->display_options['fields']['scopes']['separator'] = ' ';
-  /* Field: OAuth2 Server - Token: Last_access */
+  /* Field: OAuth2 Server - Token: Created */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'oauth2_server_token';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['date_format'] = 'short';
+  $handler->display->display_options['fields']['created']['second_date_format'] = 'long';
+  /* Field: OAuth2 Server - Token: Last access */
   $handler->display->display_options['fields']['last_access']['id'] = 'last_access';
   $handler->display->display_options['fields']['last_access']['table'] = 'oauth2_server_token';
   $handler->display->display_options['fields']['last_access']['field'] = 'last_access';
-  $handler->display->display_options['fields']['last_access']['label'] = 'Last access';
   $handler->display->display_options['fields']['last_access']['date_format'] = 'short';
   $handler->display->display_options['fields']['last_access']['second_date_format'] = 'long';
   /* Field: OAuth2 Server - Token: Oauth2 server - token ID */
@@ -163,33 +176,6 @@ function oauth2_api_token_views_default_views() {
 
   /* Display: Embed */
   $handler = $view->new_display('embed', 'Embed', 'embed_1');
-  $translatables['oauth2_api_token'] = array(
-    t('Master'),
-    t('API Tokens'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Items per page'),
-    t('- All -'),
-    t('Offset'),
-    t('« first'),
-    t('‹ previous'),
-    t('next ›'),
-    t('last »'),
-    t('No API tokens found.'),
-    t('Application'),
-    t('Scopes'),
-    t('Last access'),
-    t('Oauth2 server - token ID'),
-    t('Links'),
-    t('Edit'),
-    t('Delete'),
-    t('All'),
-    t('Embed'),
-  );
 
   $views[$view->name] = $view;
 
