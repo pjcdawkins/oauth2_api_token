@@ -137,19 +137,28 @@ function oauth2_api_token_views_default_views() {
   $handler->display->display_options['fields']['nothing_1']['table'] = 'views';
   $handler->display->display_options['fields']['nothing_1']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing_1']['label'] = 'Links';
-  $handler->display->display_options['fields']['nothing_1']['alter']['text'] = '<a href="/user/!1/api-tokens/[token_id]">View</a>';
+  $handler->display->display_options['fields']['nothing_1']['alter']['text'] = 'View';
+  $handler->display->display_options['fields']['nothing_1']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['nothing_1']['alter']['path'] = 'user/!1/api-tokens/[token_id]';
+  $handler->display->display_options['fields']['nothing_1']['alter']['absolute'] = TRUE;
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing']['id'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['table'] = 'views';
   $handler->display->display_options['fields']['nothing']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing']['label'] = 'Edit';
-  $handler->display->display_options['fields']['nothing']['alter']['text'] = '<a href="/user/!1/api-tokens/[token_id]/edit">Edit</a>';
+  $handler->display->display_options['fields']['nothing']['alter']['text'] = 'Edit';
+  $handler->display->display_options['fields']['nothing']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['nothing']['alter']['path'] = 'user/!1/api-tokens/[token_id]/edit';
+  $handler->display->display_options['fields']['nothing']['alter']['absolute'] = TRUE;
   /* Field: Global: Custom text */
   $handler->display->display_options['fields']['nothing_2']['id'] = 'nothing_2';
   $handler->display->display_options['fields']['nothing_2']['table'] = 'views';
   $handler->display->display_options['fields']['nothing_2']['field'] = 'nothing';
   $handler->display->display_options['fields']['nothing_2']['label'] = 'Delete';
-  $handler->display->display_options['fields']['nothing_2']['alter']['text'] = '<a href="/user/!1/api-tokens/[token_id]/delete">Delete</a>';
+  $handler->display->display_options['fields']['nothing_2']['alter']['text'] = 'Delete';
+  $handler->display->display_options['fields']['nothing_2']['alter']['make_link'] = TRUE;
+  $handler->display->display_options['fields']['nothing_2']['alter']['path'] = 'user/!1/api-tokens/[token_id]/delete';
+  $handler->display->display_options['fields']['nothing_2']['alter']['absolute'] = TRUE;
   /* Sort criterion: OAuth2 Server - Token: Application (api_token_app) */
   $handler->display->display_options['sorts']['api_token_app_value']['id'] = 'api_token_app_value';
   $handler->display->display_options['sorts']['api_token_app_value']['table'] = 'field_data_api_token_app';
