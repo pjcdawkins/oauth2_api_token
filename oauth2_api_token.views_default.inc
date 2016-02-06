@@ -33,6 +33,7 @@ function oauth2_api_token_views_default_views() {
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'api_token_app' => 'api_token_app',
+    'type' => 'type',
     'scopes' => 'scopes',
     'created' => 'created',
     'last_access' => 'last_access',
@@ -41,9 +42,16 @@ function oauth2_api_token_views_default_views() {
     'nothing' => 'nothing_1',
     'nothing_2' => 'nothing_1',
   );
-  $handler->display->display_options['style_options']['default'] = 'api_token_app';
+  $handler->display->display_options['style_options']['default'] = 'created';
   $handler->display->display_options['style_options']['info'] = array(
     'api_token_app' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'type' => array(
       'sortable' => 1,
       'default_sort_order' => 'asc',
       'align' => '',
@@ -53,7 +61,7 @@ function oauth2_api_token_views_default_views() {
     'scopes' => array(
       'align' => '',
       'separator' => '',
-      'empty_column' => 0,
+      'empty_column' => 1,
     ),
     'created' => array(
       'sortable' => 1,
@@ -105,6 +113,10 @@ function oauth2_api_token_views_default_views() {
   $handler->display->display_options['fields']['api_token_app']['id'] = 'api_token_app';
   $handler->display->display_options['fields']['api_token_app']['table'] = 'field_data_api_token_app';
   $handler->display->display_options['fields']['api_token_app']['field'] = 'api_token_app';
+  /* Field: OAuth2 Server - Token: Type */
+  $handler->display->display_options['fields']['type']['id'] = 'type';
+  $handler->display->display_options['fields']['type']['table'] = 'oauth2_server_token';
+  $handler->display->display_options['fields']['type']['field'] = 'type';
   /* Field: Field: Scopes */
   $handler->display->display_options['fields']['scopes']['id'] = 'scopes';
   $handler->display->display_options['fields']['scopes']['table'] = 'field_data_scopes';
@@ -124,6 +136,7 @@ function oauth2_api_token_views_default_views() {
   $handler->display->display_options['fields']['last_access']['id'] = 'last_access';
   $handler->display->display_options['fields']['last_access']['table'] = 'oauth2_server_token';
   $handler->display->display_options['fields']['last_access']['field'] = 'last_access';
+  $handler->display->display_options['fields']['last_access']['empty'] = 'Never';
   $handler->display->display_options['fields']['last_access']['date_format'] = 'short';
   $handler->display->display_options['fields']['last_access']['second_date_format'] = 'long';
   /* Field: OAuth2 Server - Token: Oauth2 server - token ID */
@@ -180,7 +193,8 @@ function oauth2_api_token_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'oauth2_server_token';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'api_token' => 'api_token',
+    'api_token_exchange' => 'api_token_exchange',
+    'api_token_access' => 'api_token_access',
   );
 
   /* Display: Embed */

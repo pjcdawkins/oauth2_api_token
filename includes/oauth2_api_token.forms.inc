@@ -7,7 +7,7 @@
 /**
  * The API token editing form.
  */
-function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = NULL) {
+function oauth2_api_token_form($form, &$form_state, $type = 'api_token_exchange', OAuth2ServerToken $token = NULL) {
   form_load_include($form_state, 'inc', 'module', 'includes/oauth2_api_token.forms');
 
   $form['actions'] = array('#type' => 'actions', '#weight' => 100);
@@ -48,25 +48,33 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
   $server_name = variable_get('oauth2_api_token_server');
   $server = $server_name ? oauth2_server_load($server_name) : NULL;
   if (!$server) {
-    drupal_set_message(t('OAuth2 server not found'), 'error');
-    watchdog('oauth2_api_token', 'OAuth2 server not found, or not configured', array(), WATCHDOG_ERROR);
+    $configure_path = 'admin/config/people/api-tokens';
+    watchdog('oauth2_api_token', 'OAuth2 server not found, or not configured', array(), WATCHDOG_ERROR, $configure_path);
+    drupal_set_message(t('OAuth2 server not found.'), 'error');
+    if (user_access('oauth2_api_token administer')) {
+      drupal_set_message(t('Set up the OAuth2 server for API tokens in the <a href="@configure_link">API token configuration</a>.', array(
+        '@configure_link' => url($configure_path),
+      )));
+    }
     $form['#disabled'] = TRUE;
     return $form;
   }
 
   /** @var OAuth2ServerToken $token */
   $token = $token ?: entity_get_controller('oauth2_server_token')->create(array(
-    'type' => 'api_token',
+    'type' => $type,
     'uid' => $GLOBALS['user']->uid,
     'expires_in' => NULL,
   ));
 
   $form_state['token'] = $token;
 
-  // Add the Application field.
+  // Add the Application field to the form.
   field_attach_form('oauth2_server_token', $token, $form, $form_state, NULL, array(
     'field_name' => 'api_token_app',
   ));
+
+  oauth2_api_token_attach_bundle_item($form, $token);
 
   // Find the current scopes for the token.
   $token_scopes = array();
@@ -108,7 +116,6 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
 
   if (user_access('oauth2_api_token administer')) {
     $default_account = menu_get_object('user') ?: $GLOBALS['user'];
-    $token_user = user_load($token->uid);
     $form['username'] = array(
       '#type' => 'textfield',
       '#title' => t('User account'),
@@ -116,7 +123,7 @@ function oauth2_api_token_form($form, &$form_state, OAuth2ServerToken $token = N
       '#size' => 30,
       '#maxlength' => 60,
       '#autocomplete_path' => 'user/autocomplete',
-      '#default_value' => empty($token->token_id) ? $default_account->name : $token_user->name,
+      '#default_value' => empty($token->token_id) ? $default_account->name : user_load($token->uid)->name,
       '#weight' => 90,
       '#required' => TRUE,
     );
@@ -214,7 +221,7 @@ function oauth2_api_token_form_submit(&$form, &$form_state) {
     drupal_set_message(t('Created API token for %application: <code>@value</code>', array(
       '%application' => $token->wrapper()->api_token_app->value(),
       '@value' => $token->token,
-    )), 'statue', FALSE);
+    )), 'status', FALSE);
   }
   elseif ($success) {
     drupal_set_message(t('Updated API token for %application', array(
@@ -266,6 +273,8 @@ function oauth2_api_token_view_value_form($form, &$form_state, OAuth2ServerToken
 
   $form['token'] = entity_view('oauth2_server_token', array($token));
   unset($form['token']['token']);
+
+  oauth2_api_token_attach_bundle_item($form, $token);
 
   $form['actions'] = array('#type' => 'actions', '#weight' => 100);
 
@@ -324,4 +333,28 @@ function oauth2_api_token_view_value_form_submit(&$form, &$form_state) {
   }
   $account = $form_state['account'];
   $form_state['redirect'] = 'user/' . $account->uid . '/api-tokens';
+}
+
+/**
+ * Attach a form item showing the token's bundle and description to a form.
+ *
+ * @param array &$form
+ *   The Form API form.
+ * @param OAuth2ServerToken $token
+ *   The API token.
+ */
+function oauth2_api_token_attach_bundle_item(&$form, OAuth2ServerToken $token) {
+  $bundles = oauth2_api_token_bundles();
+  if (!empty($bundles[$token->type]['label'])) {
+    $form['token_bundle'] = array(
+      '#type' => 'item',
+      '#title' => t('Token type'),
+      '#markup' => $bundles[$token->type]['label'],
+    );
+    if (!empty($bundles[$token->type]['description'])) {
+      $form['token_bundle']['#markup'] .= '<div class="description">'
+        . $bundles[$token->type]['description']
+        . '</div>';
+    }
+  }
 }

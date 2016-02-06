@@ -3,20 +3,20 @@
  * @file
  * Contains OAuth2ApiTokenAccessToken class.
  */
+use OAuth2\ResponseType\AccessToken;
 
 /**
  * Override \OAuth2\ResponseType\AccessToken to support API tokens.
  */
-class OAuth2ApiTokenAccessToken extends \OAuth2\ResponseType\AccessToken {
+class OAuth2ApiTokenAccessToken extends AccessToken {
 
   /**
-   * Overrides \OAuth2\ResponseType\AccessToken::__construct().
-   *
-   * Removes all the arguments as they are irrelevant.
+   * Removes all the config arguments as they are irrelevant.
    */
   public function __construct() {
     parent::__construct(new \Drupal\oauth2_server\Storage(), NULL, array(
       'access_lifetime' => 0,
+      'refresh_token_lifetime' => 0,
     ));
   }
 
@@ -41,12 +41,24 @@ class OAuth2ApiTokenAccessToken extends \OAuth2\ResponseType\AccessToken {
       $token->token = $this->generateAccessToken();
     }
 
-    $token->type = 'api_token';
+    if (!isset($token->type)) {
+      $token->type = 'api_token_exchange';
+    }
 
-    // Force the expiry time to 19 January 2038: this is the easiest way to have
-    // a never-expiring token, for now.
-    // See https://github.com/bshaffer/oauth2-server-php/issues/166
-    $token->expires = 2147483647;
+    switch ($token->type) {
+      // For personal access tokens, force the expiry time to 19 January 2038.
+      // This is the easiest way to have a never-expiring token, for now. See
+      // https://github.com/bshaffer/oauth2-server-php/issues/166
+      case 'api_token_access':
+        $token->expires = 2147483647;
+        break;
+
+      // For exchangeable tokens, ensure they cannot be used directly for
+      // authentication by setting their expiry time to 0.
+      case 'api_token_exchange':
+        $token->expires = 0;
+        break;
+    }
 
     return $token->save();
   }

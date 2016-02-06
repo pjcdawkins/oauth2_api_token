@@ -10,21 +10,28 @@
 function oauth2_api_token_config_form($form, &$form_state) {
   form_load_include($form_state, 'inc', 'module', 'includes/oauth2_api_token.admin');
 
-  $server_options = array();
-  foreach (entity_load('oauth2_server') as $server) {
-    $server_options[$server->name] = $server->label;
+  if (empty($form_state['oauth2_api_token_server_configured'])) {
+    $server_options = array();
+    foreach (entity_load('oauth2_server') as $server) {
+      $server_options[$server->name] = $server->label;
+    }
+    $form['oauth2_api_token_server'] = array(
+      '#title' => t('Server'),
+      '#type' => 'select',
+      '#options' => $server_options,
+      '#default_value' => variable_get('oauth2_api_token_server'),
+      '#required' => TRUE,
+      '#description' => t('The OAuth2 server with which API tokens will be used.'),
+    );
   }
-  $form['oauth2_api_token_server'] = array(
-    '#title' => t('Server'),
-    '#type' => 'select',
-    '#options' => $server_options,
-    '#default_value' => variable_get('oauth2_api_token_server'),
-    '#required' => TRUE,
-    '#description' => t('The OAuth2 server with which API tokens will be used.'),
-  );
-
-  if (!empty($form_state['oauth2_api_token_server_configured'])) {
+  else {
     $server_name = $form_state['values']['oauth2_api_token_server'];
+
+    $form['oauth2_api_token_server'] = array(
+      '#type' => 'value',
+      '#value' => $server_name,
+    );
+
     $scopes = oauth2_server_entity_load_by_properties('oauth2_server_scope', array(
       'server' => $server_name,
     ));

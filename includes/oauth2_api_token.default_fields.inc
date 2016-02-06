@@ -21,7 +21,7 @@ function oauth2_api_token_install_fields() {
   }
 
   $needed_instances = array(
-    'oauth2_server_token' => array('api_token'),
+    'oauth2_server_token' => array_keys(oauth2_api_token_bundles()),
   );
   foreach ($needed_instances as $entity_type => $bundles) {
     $existing = array();

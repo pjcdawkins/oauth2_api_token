@@ -26,12 +26,12 @@ function oauth2_api_token_user_list_page($account) {
 /**
  * Page callback for creating a token.
  */
-function oauth2_api_token_create_page() {
+function oauth2_api_token_create_page($type = NULL) {
   drupal_set_title(t('Create an API token'), PASS_THROUGH);
   module_load_include('inc', 'oauth2_api_token', 'includes/oauth2_api_token.forms');
 
   return array(
-    'form' => drupal_get_form('oauth2_api_token_form', NULL),
+    'form' => drupal_get_form('oauth2_api_token_form', $type),
   );
 }
 
@@ -46,6 +46,6 @@ function oauth2_api_token_edit_page(OAuth2ServerToken $token) {
   module_load_include('inc', 'oauth2_api_token', 'includes/oauth2_api_token.forms');
 
   return array(
-    'form' => drupal_get_form('oauth2_api_token_form', $token, $account),
+    'form' => drupal_get_form('oauth2_api_token_form', NULL, $token),
   );
 }
