@@ -8,7 +8,7 @@
  * The API token editing form.
  */
 function oauth2_api_token_form($form, &$form_state, $type = 'api_token_exchange', OAuth2ServerToken $token = NULL) {
-  form_load_include($form_state, 'inc', 'module', 'includes/oauth2_api_token.forms');
+  form_load_include($form_state, 'inc', 'oauth2_api_token', 'includes/oauth2_api_token.forms');
 
   $form['actions'] = array('#type' => 'actions', '#weight' => 100);
 
